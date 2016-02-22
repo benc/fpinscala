@@ -34,25 +34,25 @@ object MyList {
     case MyCons(h, t) => h + sum(t)
     case _ => 101
   }
-
-  def append[A](a1: MyList[A], a2: MyList[A]): MyList[A] =
-    a1 match {
-      case MyNil => a2
-      case MyCons(h, t) => MyCons(h, append(t, a2))
-    }
-
-  def foldRight[A, B](as: MyList[A], z: B)(f: (A, B) => B): B = // Utility functions
-    as match {
-      case MyNil => z
-      case MyCons(x, xs) => f(x, foldRight(xs, z)(f))
-    }
-
-  def sum2(ns: MyList[Int]) =
-    foldRight(ns, 0)((x, y) => x + y)
-
-  def product2(ns: MyList[Double]) =
-    foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 }
+
+def append[A](a1: MyList[A], a2: MyList[A]): MyList[A] =
+  a1 match {
+    case MyNil => a2
+    case MyCons(h, t) => MyCons(h, append(t, a2))
+  }
+
+def foldRight[A, B](as: MyList[A], z: B)(f: (A, B) => B): B = // Utility functions
+  as match {
+    case MyNil => z
+    case MyCons(x, xs) => f(x, foldRight(xs, z)(f))
+  }
+
+def sum2(ns: MyList[Int]) =
+  foldRight(ns, 0)((x, y) => x + y)
+
+def product2(ns: MyList[Double]) =
+  foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 def tail[A](l: MyList[A]): MyList[A] = l match {
   // alles voorzien, anders MatchError
@@ -66,21 +66,54 @@ def setHead[A](l: MyList[A], h: A): MyList[A] = l match {
   case MyCons(_, foo) => MyCons(h, foo)
 }
 
-def drop[A](l: MyList[A], n: Int): MyList[A] = sys.error("todo")
+def drop[A](l: MyList[A], n: Int): MyList[A] = {
+  // drop het aantal opgegeven elementen
+  // lus nodig - dat is hier wsl dan een tail recursive function?
+  def go(l: MyList[A], n: Int): MyList[A] =
+    if (n == 0) l
+    else go(tail(l), n - 1)
 
-def dropWhile[A](l: MyList[A], f: A => Boolean): MyList[A] = sys.error("todo")
+  go(l, n)
+}
 
-def init[A](l: MyList[A]): MyList[A] = sys.error("todo")
+def dropWhile[A](l: MyList[A])(f: A => Boolean): MyList[A] = l match {
+  case MyCons(x, y) if f(x) => dropWhile(y)(f)
+  case _ => l
+}
 
-def length[A](l: MyList[A]): Int = sys.error("todo")
+def init[A](l: MyList[A]): MyList[A] = l match {
+  case MyNil => sys.error("wrong!")
+  case MyCons(_, MyNil) => MyNil
+  case MyCons(h, t) => MyCons(h, init(t))
+}
 
-def foldLeft[A, B](l: MyList[A], z: B)(f: (B, A) => B): B = sys.error("todo")
+def length[A](l: MyList[A]): Int = {
+  foldRight(l, 0)((_, accumulator) => accumulator + 1)
+}
+
+@annotation.tailrec
+def foldLeft[A, B](l: MyList[A], z: B)(f: (B, A) => B): B = l match {
+  case MyNil => z
+  case MyCons(h, t) => foldLeft(t, f(z, h))(f)
+}
+
+def sum3(ns: MyList[Int]) =
+  foldLeft(ns, 0)((x, y) => x + y)
+
+def length2[A](l: MyList[A]): Int = {
+  foldLeft(l, 0)((accumulator, _) => accumulator + 1)
+}
 
 def map[A, B](l: MyList[A])(f: A => B): MyList[B] = sys.error("todo")
 
-
-val example: MyList[Int] = MyCons(1, MyCons(2, MyNil))
-
+val example: MyList[Int] = MyCons(1, MyCons(2, MyCons(3, MyNil)))
 tail(example)
 setHead(example, MyCons(4, MyNil))
-
+drop(example, 2)
+dropWhile(example)(x => x < 2)
+init(example)
+//foldRight(example, MyNil:MyList[Int])(MyCons(_,_))
+sum2(example)
+sum3(example)
+length(example)
+length2(example)
